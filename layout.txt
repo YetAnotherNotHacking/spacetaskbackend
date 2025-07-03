@@ -1,0 +1,65 @@
+the app needs the following:
+
+Peoople start with 200 coins when they sign up
+People are able to create tasks connected to a locatoin with a description, label, completion criteria, and a bounty amount for anyone that
+is able to complete it that comes from their stash of coins
+People get a base of 10 coins for completing a task *plus* whatever the task bounty is
+people need to be able to submit an image to prove that they completed the task, if the creator agrees that it met the criteria are met then the
+coin ballance is transfered
+there should be accounts, mainly to verify that people are not fullfilling their own tasks
+accounts need to store the ballance of people
+app should show a push notification if they go in range of a task
+people should be able to upload pictures proving their completion
+
+
+The endpoints need to be:
+
+
+Here’s a concise REST API layout for your app:
+Auth
+
+    POST /signup → Create account, start with 200 coins
+
+    POST /login → Authenticate and return token
+
+    GET /me → Get current user info (balance, etc.)
+
+Tasks
+
+    POST /tasks → Create task (location, label, description, bounty, criteria)
+
+    GET /tasks → List tasks (optionally filter by proximity or label)
+
+    GET /tasks/:id → Get task details
+
+    PATCH /tasks/:id → Edit task (if owner)
+
+    DELETE /tasks/:id → Delete task (if owner, unclaimed)
+
+Task Completion
+
+    POST /tasks/:id/submit → Submit proof (image + optional note)
+
+    GET /tasks/:id/submissions → View submissions (owner only)
+
+    POST /tasks/:id/submissions/:submissionId/accept → Approve submission, transfer coins
+
+Notifications
+
+    POST /notifications/register → Register device for push
+
+    GET /tasks/nearby?lat=...&lng=... → Used server-side to push notifications
+
+User
+
+    GET /users/:id → View profile
+
+    GET /users/:id/tasks → View tasks created
+
+    GET /users/:id/completions → View tasks completed
+
+Media
+
+    POST /upload → Upload image, return URL (used for proof)
+
+Auth should use JWT. All coin changes must be server-side verified.
