@@ -24,6 +24,7 @@ RUN apt-get update \
         tcl8.6-dev \
         tk8.6-dev \
         python3-tk \
+        gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
@@ -45,9 +46,9 @@ RUN mkdir -p uploads data
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser && \
     chown -R appuser:appuser /app && \
-    chown appuser:appuser /docker-entrypoint.sh
+    chmod +x /docker-entrypoint.sh
 
-USER appuser
+# Don't switch to appuser yet - entrypoint will handle it
 
 # Expose port
 EXPOSE 8000
