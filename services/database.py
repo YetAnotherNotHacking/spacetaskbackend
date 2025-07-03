@@ -5,7 +5,9 @@ from typing import Optional, List, Dict, Any
 import json
 
 class DatabaseService:
-    def __init__(self, db_path: str = "spacetask.db"):
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            db_path = os.getenv('DATABASE_PATH', 'spacetask.db')
         self.db_path = db_path
         self.init_database()
     
