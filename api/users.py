@@ -65,4 +65,24 @@ def get_user_completions(user_id):
         }), 200
         
     except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
+@users_bp.route('/leaderboard', methods=['GET'])
+def get_leaderboard():
+    """Get user leaderboard ordered by coins, completions, and username"""
+    try:
+        # Get optional limit parameter, default to 10
+        limit = request.args.get('limit', default=10, type=int)
+        
+        # Ensure limit is between 1 and 100
+        limit = max(1, min(limit, 100))
+        
+        leaderboard = db.get_leaderboard(limit)
+        
+        return jsonify({
+            'leaderboard': leaderboard,
+            'count': len(leaderboard)
+        }), 200
+        
+    except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500 

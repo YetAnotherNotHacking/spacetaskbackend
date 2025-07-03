@@ -426,28 +426,61 @@ class DatabaseService:
         return tasks
     
     def get_user_tasks(self, user_id: int, task_type: str = 'created') -> List[Dict[str, Any]]:
-        """Get tasks created by or completed by user"""
+        """Get tasks created or completed by user"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
         if task_type == 'created':
-            cursor.execute('''
+            query = '''
                 SELECT t.*, u.username as creator_username
                 FROM tasks t
                 JOIN users u ON t.creator_id = u.id
                 WHERE t.creator_id = ?
                 ORDER BY t.created_at DESC
-            ''', (user_id,))
+            '''
+            cursor.execute(query, (user_id,))
         else:  # completed
-            cursor.execute('''
-                SELECT DISTINCT t.*, u.username as creator_username
+            query = '''
+                SELECT t.*, u.username as creator_username, s.submitted_at, s.image_url
                 FROM tasks t
                 JOIN users u ON t.creator_id = u.id
-                JOIN task_submissions ts ON t.id = ts.task_id
-                WHERE ts.submitter_id = ? AND ts.status = 'accepted'
-                ORDER BY ts.reviewed_at DESC
-            ''', (user_id,))
+                JOIN task_submissions s ON t.id = s.task_id
+                WHERE s.submitter_id = ? AND s.status = 'accepted'
+                ORDER BY s.submitted_at DESC
+            '''
+            cursor.execute(query, (user_id,))
         
         tasks = [dict(row) for row in cursor.fetchall()]
         conn.close()
-        return tasks 
+        return tasks
+
+    def get_leaderboard(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get user leaderboard ordered by coins, task completions, and username"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        query = '''
+            WITH user_completions AS (
+                SELECT submitter_id, COUNT(*) as completed_tasks
+                FROM task_submissions
+                WHERE status = 'accepted'
+                GROUP BY submitter_id
+            )
+            SELECT 
+                u.id,
+                u.username,
+                u.coin_balance,
+                COALESCE(uc.completed_tasks, 0) as completed_tasks
+            FROM users u
+            LEFT JOIN user_completions uc ON u.id = uc.submitter_id
+            ORDER BY 
+                u.coin_balance DESC,
+                COALESCE(uc.completed_tasks, 0) DESC,
+                u.username ASC
+            LIMIT ?
+        '''
+        
+        cursor.execute(query, (limit,))
+        leaderboard = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return leaderboard 
