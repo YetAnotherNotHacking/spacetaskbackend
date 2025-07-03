@@ -44,6 +44,8 @@ A location-based task completion app where users can create tasks with bounties 
 
 ## Setup
 
+### Local Development
+
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
@@ -52,6 +54,8 @@ A location-based task completion app where users can create tasks with bounties 
 
 2. **Install dependencies**
    ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
@@ -67,6 +71,74 @@ A location-based task completion app where users can create tasks with bounties 
    ```
 
 The API will be available at `http://localhost:5000`
+
+### Docker Deployment
+
+#### Quick Start with Docker Compose
+
+1. **Clone and build**
+   ```bash
+   git clone <repository-url>
+   cd spacetaskbackend
+   ```
+
+2. **Run with Docker Compose**
+   ```bash
+   # Development
+   docker-compose up -d
+
+   # Production with environment variables
+   export SECRET_KEY="your-production-secret-key"
+   export JWT_SECRET="your-production-jwt-secret"
+   export BASE_URL="https://yourdomain.com"
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+The API will be available at `http://localhost:8000`
+
+#### Docker Commands
+
+```bash
+# Build the image
+docker build -t spacetask-backend .
+
+# Run the container
+docker run -d \
+  --name spacetask \
+  -p 8000:8000 \
+  -e SECRET_KEY="your-secret-key" \
+  -e JWT_SECRET="your-jwt-secret" \
+  -v spacetask_data:/app/data \
+  -v spacetask_uploads:/app/uploads \
+  spacetask-backend
+
+# View logs
+docker logs spacetask
+
+# Stop and remove
+docker stop spacetask
+docker rm spacetask
+```
+
+#### Production Deployment with Nginx
+
+For production with SSL and reverse proxy:
+
+```bash
+# Run with nginx reverse proxy
+docker-compose -f docker-compose.prod.yml --profile with-nginx up -d
+```
+
+#### Environment Variables for Docker
+
+Create a `.env` file for production:
+
+```bash
+SECRET_KEY=your-very-secure-secret-key-here
+JWT_SECRET=your-very-secure-jwt-secret-here
+BASE_URL=https://yourdomain.com
+DEBUG=False
+```
 
 ## Project Structure
 
@@ -85,10 +157,13 @@ spacetaskbackend/
 │   ├── email.py           # Email service
 │   └── upload.py          # File upload service
 ├── uploads/               # Uploaded files directory
-├── api.py                 # Main Flask application
 ├── main.py                # Entry point
 ├── requirements.txt       # Python dependencies
 ├── .env.example          # Environment configuration template
+├── Dockerfile            # Docker container definition
+├── docker-compose.yml    # Docker Compose for development
+├── docker-compose.prod.yml # Docker Compose for production
+├── nginx.conf            # Nginx reverse proxy configuration
 └── README.md             # This file
 ```
 
@@ -111,7 +186,7 @@ Key environment variables:
 - `DATABASE_PATH`: SQLite database file path
 - `UPLOAD_FOLDER`: Directory for uploaded files
 - `BASE_URL`: Base URL for file serving
-- `PORT`: Server port (default: 5000)
+- `PORT`: Server port (default: 5000, Docker: 8000)
 - `DEBUG`: Enable debug mode
 
 ## Security
@@ -121,6 +196,7 @@ Key environment variables:
 - File upload validation and resizing
 - SQL injection protection with parameterized queries
 - CORS enabled for cross-origin requests
+- Docker security: non-root user, read-only filesystem, resource limits
 
 ## Coin System
 
@@ -140,11 +216,61 @@ python main.py
 
 The API will reload automatically when files change.
 
+## Production Deployment
+
+### Docker (Recommended)
+
+1. **Build and deploy**
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+2. **Set up SSL** (optional, with nginx)
+   - Configure SSL certificates
+   - Update nginx.conf for HTTPS
+   - Use Let's Encrypt for free SSL
+
+3. **Monitor**
+   ```bash
+   docker-compose logs -f spacetask-backend
+   ```
+
+### Manual Deployment
+
+1. **Set up server** (Ubuntu/Debian)
+   ```bash
+   sudo apt update
+   sudo apt install python3 python3-pip python3-venv nginx
+   ```
+
+2. **Deploy application**
+   ```bash
+   git clone <repository-url>
+   cd spacetaskbackend
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. **Configure systemd service**
+   ```bash
+   sudo cp spacetask.service /etc/systemd/system/
+   sudo systemctl enable spacetask
+   sudo systemctl start spacetask
+   ```
+
+4. **Configure nginx reverse proxy**
+   ```bash
+   sudo cp nginx.conf /etc/nginx/sites-available/spacetask
+   sudo ln -s /etc/nginx/sites-available/spacetask /etc/nginx/sites-enabled/
+   sudo systemctl restart nginx
+   ```
+
 ## API Usage Examples
 
 ### Create Account
 ```bash
-curl -X POST http://localhost:5000/api/signup \
+curl -X POST http://localhost:8000/api/signup \
   -H "Content-Type: application/json" \
   -d '{
     "username": "john_doe",
@@ -155,7 +281,7 @@ curl -X POST http://localhost:5000/api/signup \
 
 ### Create Task
 ```bash
-curl -X POST http://localhost:5000/api/tasks \
+curl -X POST http://localhost:8000/api/tasks \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -171,7 +297,7 @@ curl -X POST http://localhost:5000/api/tasks \
 
 ### Upload Image
 ```bash
-curl -X POST http://localhost:5000/api/upload \
+curl -X POST http://localhost:8000/api/upload \
   -H "Authorization: Bearer <token>" \
   -F "file=@proof.jpg"
 ```
