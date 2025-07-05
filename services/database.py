@@ -5,8 +5,15 @@ from typing import Optional, List, Dict, Any
 import json
 
 class DatabaseService:
-    def __init__(self, db_path: str = "spacetask.db"):
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            # Use environment variable or default to data directory
+            db_path = os.getenv('DATABASE_PATH', '/app/data/spacetask.db')
         self.db_path = db_path
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        
         self.init_database()
     
     def get_connection(self):
