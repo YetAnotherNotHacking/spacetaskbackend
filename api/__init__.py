@@ -35,7 +35,8 @@ def create_app():
     # Serve uploaded files
     @app.route('/uploads/<filename>')
     def uploaded_file(filename):
-        return send_from_directory('uploads', filename)
+        upload_folder = os.getenv('UPLOAD_FOLDER', '/app/uploads')
+        return send_from_directory(upload_folder, filename)
     
     # Health check endpoint
     @app.route('/api/health')
