@@ -13,7 +13,7 @@ services:
       - JWT_SECRET=production-jwt-secret-change-this
       - DATABASE_PATH=/app/data/spacetask.db
       - UPLOAD_FOLDER=/app/uploads
-      - BASE_URL=http://localhost:8000
+      - BASE_URL=http://silverflag.net:8000
     volumes:
       # Persist database and uploads
       - spacetask_data:/app/data
