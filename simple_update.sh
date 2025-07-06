@@ -25,9 +25,9 @@ sleep 15
 
 # Check if it's working
 echo "🔍 Checking if API is responding..."
-if curl -f -s http://localhost/api/health > /dev/null; then
+if curl -f -s http://silverflag.net:8000/api/health > /dev/null; then
     echo "✅ Update completed successfully!"
-    echo "🌐 API is available at: http://localhost"
+    echo "🌐 API is available at: http://silverflag.net:8000"
 else
     echo "❌ API health check failed"
     echo "📋 Container status:"
