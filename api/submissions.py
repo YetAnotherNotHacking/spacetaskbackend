@@ -93,6 +93,50 @@ def get_task_submissions(task_id):
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
 
+@submissions_bp.route('/<int:task_id>/images', methods=['GET'])
+def get_task_images(task_id):
+    """Get all uploaded images for a task with submission IDs (owner only)"""
+    try:
+        # Authenticate user
+        user_data = get_user_from_request()
+        if not user_data:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Get task
+        task = db.get_task_by_id(task_id)
+        if not task:
+            return jsonify({'error': 'Task not found'}), 404
+        
+        # Check if user is the creator
+        if task['creator_id'] != user_data['user_id']:
+            return jsonify({'error': 'Not authorized to view task images'}), 403
+        
+        # Get all submissions for this task
+        submissions = db.get_task_submissions(task_id)
+        
+        # Extract image information
+        images = []
+        for submission in submissions:
+            images.append({
+                'submission_id': submission['id'],
+                'image_url': submission['image_url'],
+                'submitter_id': submission['submitter_id'],
+                'submitter_username': submission['submitter_username'],
+                'status': submission['status'],
+                'submitted_at': submission['submitted_at'],
+                'note': submission.get('note', '')
+            })
+        
+        return jsonify({
+            'task_id': task_id,
+            'task_title': task['title'],
+            'images': images,
+            'count': len(images)
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
 @submissions_bp.route('/<int:task_id>/submissions/<int:submission_id>/accept', methods=['POST'])
 def accept_submission(task_id, submission_id):
     """Accept a submission and transfer coins"""
